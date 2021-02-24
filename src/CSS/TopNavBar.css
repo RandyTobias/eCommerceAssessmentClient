@@ -1,0 +1,32 @@
+.TopNavBar {
+    height: 100%;
+}
+
+.TopNavBar nav {
+    height: 100%;
+    border-bottom: 2px solid lightgray;
+}
+
+.TopNavBar nav ul li {
+    display: inline-block;
+    width: 5rem;
+    height: 3rem;
+    margin: auto;
+}
+
+.TopNavBar nav ul li a {
+    display: block;
+    line-height: 3rem;
+}
+
+li#NavHome {
+    float: left;
+}
+
+li#NavRegistration {
+    float: right;
+}
+
+li#NavLogIn {
+    float: right;
+}
