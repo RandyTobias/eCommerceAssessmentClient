@@ -1,0 +1,21 @@
+.DeleteScreen .Data .row label {
+    float: left;
+    text-align: left;
+}
+
+.DeleteScreen .Data .row .col-sm-8 .data {
+    float: right;    
+}
+
+.DeleteScreen .Data .row .col-sm-8 .data input.inputData {
+    text-align: right;
+}
+
+.DeleteScreen .Data .row .col .data {
+    float: right;
+}
+
+.DeleteScreen .Data .row label {
+    float: left;
+    text-align: left;
+}

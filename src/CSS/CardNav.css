@@ -1,0 +1,29 @@
+.CardNav {
+    display: inline-block;
+    width: 12rem;
+    height: 18rem;
+    margin: 1rem;
+}
+
+.CardNav a {
+    color: inherit;
+    text-decoration: none !important;
+}
+
+.CardNav .card {
+    display: block;
+    height: 100%;
+}
+
+.CardNav .card:hover {
+    background: aliceblue;
+}
+
+.CardNav .card .card-body {
+    display: block;
+    height: 100%;
+}
+
+.CardNav .card .card-body button {
+    margin-top: auto;
+}

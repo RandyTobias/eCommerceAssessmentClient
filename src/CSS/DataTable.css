@@ -1,0 +1,15 @@
+.edit span.badge.badge-pill.badge-primary:active {
+    background-color: blue;
+}
+
+span.badge.badge-pill.badge-primary:hover {
+    cursor: pointer;
+}
+
+.delete span.badge.badge-pill.badge-danger:active {
+    background-color: darkred;
+}
+
+.delete span.badge.badge-pill.badge-danger:hover {
+    cursor: pointer;
+}

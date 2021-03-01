@@ -1,0 +1,16 @@
+.CreateScreen .Data .form-group:hover {
+    background: aliceblue;
+}
+
+.CreateScreen .Data .row label {
+    float: left;
+    text-align: left;
+}
+
+.CreateScreen .Data .row .col-sm-8 .data {
+    float: right;    
+}
+
+.CreateScreen .Data .row .col-sm-8 .data input.inputData {
+    text-align: right;
+}

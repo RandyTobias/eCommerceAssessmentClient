@@ -1,20 +1,16 @@
 //import logo from './logo.svg';
 import './CSS/App.css';
+import React, { Component } from 'react';
 import {
   BrowserRouter as Router,
   Switch,
-  Route
+  Route,
 } from 'react-router-dom';
-import { 
-  Row, 
-  Col, 
-  Container 
+import {
+  Row,
+  Col,
+  Container
 } from 'react-bootstrap';
-
-import AuthRoute from './HOCs/AuthRoute';
-
-import Auth from './Services/Auth';
-import { AuthProvider } from './HOCs/AuthProvider';
 
 import Home from './Screens/Home';
 import LogIn from './Screens/LogIn';
@@ -29,51 +25,63 @@ import ShippingProvider from './Screens/ShippingProvider';
 
 import TopNavBar from './Components/TopNavBar';
 
-const authService = new Auth();
+import withAuth from './HOCs/withAuth';
 
-function App() {
+import UserRouter from './Routers/UserRouter';
+import UserTypeRouter from './Routers/UserTypeRouter';
+import AddressRouter from './Routers/AddressRouter';
+import ShippingProviderRouter from './Routers/ShippingProviderRouter';
+import ProductRouter from './Routers/ProductRouter';
+import OrderRouter from './Routers/OrderRouter';
+import TransactionRouter from './Routers/TransactionRouter';
 
-  return (
-    <div className="App">
-      <Container>
-        <AuthProvider service={authService}>
+class App extends Component {
+
+  render() {
+    return (
+      <div className="App">
+        <Container>
           <Router>
 
             <Container id="Header">
               <Row>
-                  <Col xs={0} md={2}></Col>
-                  <Col xs={12} md={8}>
-                    <TopNavBar/>
-                  </Col>
-                  <Col xs={0} md={2}></Col>
+                {/* <Col xs={0} md={2}></Col>
+                <Col xs={12} md={8}> */}
+                <Col xs={12}>
+                  <TopNavBar />
+                </Col>
+                {/* </Col>
+                <Col xs={0} md={2}></Col> */}
               </Row>
             </Container>
 
             <Container id="Body">
               <Row>
                 <Col xs={0} md={2}></Col>
-                <Col xs={12} md={8}>     
+                <Col xs={12} md={8}>
+
                   <Switch>
-                    
-                    <Route path="/LogIn">
-                      <LogIn />
-                    </Route>
-                    <Route path="/">
-                      <Home />
-                    </Route>
-                  </Switch>
-                  <Switch>
-                    <AuthRoute exact path='/' component={Home}/>
-                    <AuthRoute path='/Users' component={User}/>
-                    <AuthRoute path='/UserType' component={UserType} />
-                    <AuthRoute path='/Orders' component={Order} />
-                    <AuthRoute path='/Transactions' component={Transaction} />
-                    <AuthRoute path='/Addresses' component={Address} />
-                    <AuthRoute path='/Products' component={Product} />
-                    <AuthRoute path='/ShippingProviders' component={ShippingProvider} />
+                    <Route exact path='/' component={withAuth(Home)} />
+                    <Route path='/User' component={withAuth(User)} />
+                    <Route path='/UserType' component={withAuth(UserType)} />
+                    <Route path='/Order' component={withAuth(Order)} />
+                    <Route path='/Transaction' component={withAuth(Transaction)} />
+                    <Route path='/Address' component={withAuth(Address)} />
+                    <Route path='/Product' component={withAuth(Product)} />
+                    <Route path='/ShippingProvider' component={withAuth(ShippingProvider)} />
                     <Route path='/Registration' component={Registration} />
-                    <Route path='/LogIn' component={LogIn}/>
-                </Switch>
+                    <Route path='/LogIn' component={LogIn} />
+                    <React.Fragment>
+                      <UserTypeRouter />
+                      <UserRouter />
+                      <AddressRouter />
+                      <ShippingProviderRouter />
+                      <ProductRouter />
+                      <OrderRouter />
+                      <TransactionRouter />
+                    </React.Fragment>
+                  </Switch>
+
                 </Col>
                 <Col xs={0} md={2}></Col>
               </Row>
@@ -81,19 +89,19 @@ function App() {
 
             <Container id="Footer">
               <Row>
-                  <Col xs={0} md={2}></Col>
-                  <Col xs={12} md={8}>
+                <Col xs={0} md={2}></Col>
+                <Col xs={12} md={8}>
 
-                  </Col>
-                  <Col xs={0} md={2}></Col>
+                </Col>
+                <Col xs={0} md={2}></Col>
               </Row>
             </Container>
 
           </Router>
-        </AuthProvider>
-     </Container>
-   </div>
-  );
-}
 
+        </Container>
+      </div>
+    );
+  }
+}
 export default App;
