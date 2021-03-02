@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import { Container } from 'react-bootstrap';
 
-import AuthService from '../Services/AuthService';
+import AccessService from '../Services/AccessService';
 
 import BreadCrumbs from '../Components/BreadCrumbs';
 import CardNav from '../Components/CardNav';
@@ -11,22 +11,16 @@ class ShippingProvider extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      currentUser: undefined,
-      showStaffContent: false,
-      showAdminContent: false,
-    };
+    this.state = {};
   }
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-
-    if (user) {
-      this.setState({
-        currentUser: user,
-        showStaffContent: user.role === (2).toString(),
-        showAdminContent: user.role === (1).toString(),
-      });
+  async componentDidMount() {
+    try{
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({...this.state, ...ACLs});
+    }
+    catch(e){
+      console.log(e);
     }
   }
 
@@ -34,7 +28,7 @@ class ShippingProvider extends Component {
     const { showStaffContent, showAdminContent } = this.state;
     const parts = [
       { link: "/", title: "Home" },
-      { link: null, title: "ShippingProviders" }
+      { link: null, title: "Shipping Providers" }
     ];
 
     return (
@@ -61,34 +55,34 @@ class ShippingProvider extends Component {
         {showAdminContent && (
           <React.Fragment>
             <CardNav
-              title={"ShippingProvider"}
+              title={"Shipping Provider"}
               text={""}
               linkTarget={"/ShippingProviders/ShippingProviderGet"}
-              linkText={"Get a ShippingProvider"}
+              linkText={"Get a Shipping Provider"}
             />
             <CardNav
-              title={"All ShippingProviders"}
+              title={"All Shipping Providers"}
               text={""}
               linkTarget={"/ShippingProviders/ShippingProviderAll"}
-              linkText={"Get All ShippingProviders"}
+              linkText={"Get All Shipping Providers"}
             />
             <CardNav
               title={"Create"}
               text={""}
               linkTarget={"/ShippingProviders/ShippingProviderCreate"}
-              linkText={"Create a ShippingProvider"}
+              linkText={"Create a Shipping Provider"}
             />
             <CardNav
               title={"Update"}
               text={""}
               linkTarget={"/ShippingProviders/ShippingProviderUpdate"}
-              linkText={"Update a ShippingProvider"}
+              linkText={"Update a Shipping Provider"}
             />
             <CardNav
               title={"Delete"}
               text={""}
               linkTarget={"/ShippingProviders/ShippingProviderDelete"}
-              linkText={"Delete a ShippingProvider"}
+              linkText={"Delete a Shipping Provider"}
             />
           </React.Fragment>
         )}

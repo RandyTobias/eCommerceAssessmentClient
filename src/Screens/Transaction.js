@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import { Container } from 'react-bootstrap';
 
-import AuthService from '../Services/AuthService';
+import AccessService from '../Services/AccessService';
 
 import BreadCrumbs from '../Components/BreadCrumbs';
 import CardNav from '../Components/CardNav';
@@ -11,22 +11,16 @@ class Transaction extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      currentUser: undefined,
-      showStaffContent: false,
-      showAdminContent: false,
-    };
+    this.state = {};
   }
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-
-    if (user) {
-      this.setState({
-        currentUser: user,
-        showStaffContent: user.role === (2).toString(),
-        showAdminContent: user.role === (1).toString(),
-      });
+  async componentDidMount() {
+    try{
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({...this.state, ...ACLs});
+    }
+    catch(e){
+      console.log(e);
     }
   }
 

@@ -8,11 +8,13 @@ import {
 } from 'react-bootstrap';
 
 import AuthService from '../../Services/AuthService';
+import AccessService from '../../Services/AccessService';
 import UserService from '../../Services/UserService';
 
 import BreadCrumbs from '../../Components/BreadCrumbs';
 
 import '../../CSS/CreateScreen.css';
+import UserTypeService from '../../Services/UserTypeService';
 
 class UserCreate extends Component {
   constructor(props) {
@@ -25,11 +27,7 @@ class UserCreate extends Component {
 
     this.state = {
       isFetching: false,
-      currentUser: undefined,
       userData: {},
-      showAdminContent: false,
-      showStaffContent: false,
-      showCustomerContent: false,
       email: "",
       password: "",
       fName: "",
@@ -45,22 +43,27 @@ class UserCreate extends Component {
   async fetchDataAsync(user) {
     try {
       this.setState({ ...this.state, isFetching: true });
-      const response = await UserService.userGet(user.nameid);
-      let ACLs = {
-        showCustomerContent: response.typeid === 3,
-        showStaffContent: response.typeid === 2,
-        showAdminContent: response.typeid === 1
-      };
-      this.setState({ ...ACLs, userData: response, isFetching: false });
+      if (user){
+        const response = await UserService.userGet(user.nameid);
+        const userTypes = await UserTypeService.userTypeGetAll();
+        this.setState({ ...this.state, userTypes: userTypes, userData: response, isFetching: false });
+      }
     } catch (e) {
       console.log(e);
       this.setState({ ...this.state, isFetching: false });
     }
   };
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-    this.fetchDataAsync(user);
+  async componentDidMount() {
+    try {
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({ ...this.state, ...ACLs });
+
+      await this.fetchDataAsync(this.user);
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 
   handleEmailChange(e) {
@@ -113,6 +116,7 @@ class UserCreate extends Component {
     UserService.userAdd(payload).then(
       () => {
         this.setState({loading:false});
+        this.props.history.goBack();
       },
       error => {
         const resMessage =
@@ -136,11 +140,6 @@ class UserCreate extends Component {
       { link: "/User", title: "Users" },
       { link: null, title: "Create User" }
     ];
-    const userTypesArray = [
-      {key: 1, type: "Administrator"},
-      {key: 2, type: "Staff"},
-      {key: 3, type: "Customer"}
-    ]
 
     return (
       <Container className="CreateScreen">
@@ -225,11 +224,16 @@ class UserCreate extends Component {
                     value={this.state.type ? this.state.type : ''}
                   >
                     <React.Fragment>
-                      {userTypesArray.map(type => {
-                        return (
-                          <option value={type.key} key={type.key}>{type.type}</option>
-                        );
-                      })}
+                      {
+                        (
+                          this.state.userTypes &&
+                          Object.keys(this.state.userTypes).length !== 0
+                        ) ? this.state.userTypes.map(type => {
+                          return (
+                            <option value={type.id} key={type.id}>{type.type}</option>
+                          );
+                        }) : null 
+                      }
                     </React.Fragment>
                   </Form.Control>
                 </span>

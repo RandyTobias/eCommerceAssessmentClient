@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 
 import AuthService from '../../Services/AuthService';
+import AccessService from '../../Services/AccessService';
 import UserService from '../../Services/UserService';
 import UserTypeService from '../../Services/UserTypeService';
 
@@ -24,11 +25,7 @@ class UserTypeUpdate extends Component {
 
     this.state = {
       isFetching: false,
-      currentUserType: undefined,
       userData: {},
-      showAdminContent: false,
-      showStaffContent: false,
-      showCustomerContent: false,
       userTypeData: {},
       id: "",
       accessLevel: "",
@@ -43,23 +40,27 @@ class UserTypeUpdate extends Component {
   async fetchDataAsync(user) {
     try {
       this.setState({ ...this.state, isFetching: true });
-      const response = await UserService.userGet(user.nameid);
-      const data = await UserTypeService.userTypeGetAll();
-      let ACLs = {
-        showCustomerContent: response.typeid === 3,
-        showStaffContent: response.typeid === 2,
-        showAdminContent: response.typeid === 1
-      };
-      this.setState({ ...ACLs, userTypeData: data, userData: response, isFetching: false });
+      if (user){
+        const response = await UserService.userGet(user.nameid);
+        const data = await UserTypeService.userTypeGetAll();
+        this.setState({userTypeData: data, userData: response, isFetching: false });
+      }
     } catch (e) {
       console.log(e);
       this.setState({ ...this.state, isFetching: false });
     }
   };
 
-  componentDidMount() {
-    const userType = AuthService.getCurrentUser();
-    this.fetchDataAsync(userType);
+  async componentDidMount() {
+    try{
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({...this.state, ...ACLs});
+      
+      await this.fetchDataAsync(this.user);
+    }
+    catch(e){
+      console.log(e);
+    }
   }
 
   handleTypeChange(e) {
@@ -128,11 +129,15 @@ class UserTypeUpdate extends Component {
                         value={this.state.id ? this.state.id : ''}
                       >
                         <React.Fragment>
-                          {this.state.userTypeData.map(type => {
+                          {
+                            (
+                              this.state.userTypeData &&
+                              Object.keys(this.state.userTypeData).length !== 0
+                            ) ? this.state.userTypeData.map(type => {
                             return (
                               <option value={type.id} key={type.id}>{type.id}</option>
                             );
-                          })}
+                          }) : "" }
                         </React.Fragment>
                       </Form.Control>
                     </span>

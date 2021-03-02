@@ -27,9 +27,9 @@ class DataTable extends Component {
                     <thead>
                         <tr key="rowHeader">
                             {
-                                (this.props.data && this.props.data[0]) ? Object.keys(this.props.data[0]).map(key => {
+                                (this.props.data && this.props.data[0] && Object.keys(this.props.data[0]).length !== 0) ? Object.keys(this.props.data[0]).map(key => {
                                     return (<th key={key+"Header"}>{key}</th>);
-                                }) : ''
+                                }) : null
                             }
                             {this.props.adminContent && (
                                 <React.Fragment>
@@ -41,15 +41,14 @@ class DataTable extends Component {
                     </thead>
                     <tbody>
                         {
+                            (this.props.data && Object.keys(this.props.data).length !== 0) ?
                             this.props.data.map(segment => {
                                 return (
                                     <tr key={"row"+segment.ID}>
                                         {
                                             Object.keys(segment).map(key => {
-                                                return (
-                                                    <td key={key + segment.ID}>{segment[key]}</td>
-                                                );
-                                            })
+                                                return (<td key={key + segment.ID}>{segment[key]}</td>);
+                                            }) 
                                         }
                                         {this.props.adminContent && (
                                             <React.Fragment>
@@ -68,7 +67,7 @@ class DataTable extends Component {
                                         )}
                                     </tr>
                                 );
-                            })
+                            }) : null
                         }
                     </tbody>
                 </Table>
