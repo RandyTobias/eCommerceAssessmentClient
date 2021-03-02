@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 
 import AuthService from '../../Services/AuthService';
+import AccessService from '../../Services/AccessService';
 import UserService from '../../Services/UserService';
 import UserTypeService from '../../Services/UserTypeService';
 
@@ -23,11 +24,7 @@ class UserTypeCreate extends Component {
 
     this.state = {
       isFetching: false,
-      currentUser: undefined,
       userData: {},
-      showAdminContent: false,
-      showStaffContent: false,
-      showCustomerContent: false,
       accessLevel: "",
       type: "",
       loading: false,
@@ -39,23 +36,27 @@ class UserTypeCreate extends Component {
 
   async fetchDataAsync(user) {
     try {
-      this.setState({ ...this.state, isFetching: true });
-      const response = await UserService.userGet(user.nameid);
-      let ACLs = {
-        showCustomerContent: response.typeid === 3,
-        showStaffContent: response.typeid === 2,
-        showAdminContent: response.typeid === 1
-      };
-      this.setState({ ...ACLs, userData: response, isFetching: false });
+      if (user){
+        this.setState({ ...this.state, isFetching: true });
+        const response = await UserService.userGet(user.nameid);
+        this.setState({ userData: response, isFetching: false });
+      }
     } catch (e) {
       console.log(e);
       this.setState({ ...this.state, isFetching: false });
     }
   };
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-    this.fetchDataAsync(user);
+  async componentDidMount() {
+    try{
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({...this.state, ...ACLs});
+      
+      await this.fetchDataAsync(this.user);
+    }
+    catch(e){
+      console.log(e);
+    }
   }
 
   handleAccessLevelChange(e) {
@@ -85,6 +86,7 @@ class UserTypeCreate extends Component {
     UserTypeService.userTypeAdd(payload).then(
       () => {
         this.setState({ loading: false });
+        this.props.history.goBack();
       },
       error => {
         const resMessage =
@@ -108,12 +110,7 @@ class UserTypeCreate extends Component {
       { link: "/UserType", title: "User Types" },
       { link: null, title: "Create User Type" }
     ];
-    const userTypesArray = [
-      { key: 1, type: "Administrator" },
-      { key: 2, type: "Staff" },
-      { key: 3, type: "Customer" }
-    ]
-
+  
     return (
       <Container className="CreateScreen">
         <BreadCrumbs parts={parts} />

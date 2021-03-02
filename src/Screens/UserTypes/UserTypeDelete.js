@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 
 import AuthService from '../../Services/AuthService';
+import AccessService from '../../Services/AccessService';
 import UserService from '../../Services/UserService';
 import UserTypeService from '../../Services/UserTypeService';
 
@@ -22,12 +23,8 @@ class UserTypeDelete extends Component {
 
     this.state = {
       isFetching: false,
-      currentUser: undefined,
       userData: {},
       content: {},
-      showAdminContent: false,
-      showStaffContent: false,
-      showCustomerContent: false,
       userTypeId: "",
       type: "",
       accessLevel: "",
@@ -41,27 +38,24 @@ class UserTypeDelete extends Component {
   async fetchDataAsync(user) {
     try {
       this.setState({ ...this.state, isFetching: true });
-      //Get User Permissions
-      const response = await UserService.userGet(user.nameid);
-      let ACLs = {
-        showCustomerContent: response.typeid === 3,
-        showStaffContent: response.typeid === 2,
-        showAdminContent: response.typeid === 1
-      };
-      //get all user types
-      const content = await UserTypeService.userTypeGetAll();
-      //get user type info of selected user type because user types from the getAll aren't indexed by typeId.
-      if (this.state.userTypeId !== "") {
-        const response2 = await UserTypeService.userTypeGet(this.state.userTypeId);
-        let data = {
-          userTypeId: response2.id,
-          type: response2.type,
-          accessLevel: response2.accessLevel,
-        };
-        this.setState({ ...ACLs, ...data, userData: response, content: content, isFetching: false });
-      }
-      else {
-        this.setState({ ...ACLs, userData: response, content: content, isFetching: false });
+      if (user){
+        //Get User Permissions
+        const response = await UserService.userGet(user.nameid);
+        //get all user types
+        const content = await UserTypeService.userTypeGetAll();
+        //get user type info of selected user type because user types from the getAll aren't indexed by typeId.
+        if (this.state.userTypeId !== "") {
+          const response2 = await UserTypeService.userTypeGet(this.state.userTypeId);
+          let data = {
+            userTypeId: response2.id,
+            type: response2.type,
+            accessLevel: response2.accessLevel,
+          };
+          this.setState({ ...data, userData: response, content: content, isFetching: false });
+        }
+        else {
+          this.setState({ userData: response, content: content, isFetching: false });
+        }
       }
     } catch (e) {
       console.log(e);
@@ -69,9 +63,16 @@ class UserTypeDelete extends Component {
     }
   };
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-    this.fetchDataAsync(user);
+  async componentDidMount() {
+    try{
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({...this.state, ...ACLs});
+      
+      await this.fetchDataAsync(this.user);
+    }
+    catch(e){
+      console.log(e);
+    }
   }
 
   async handleIdChange(e) {
@@ -113,6 +114,7 @@ class UserTypeDelete extends Component {
     UserTypeService.userTypeDelete(this.state.userTypeId).then(
       () => {
         this.setState({ loading: false });
+        this.props.history.goBack();
       },
       error => {
         const resMessage =
@@ -168,11 +170,14 @@ class UserTypeDelete extends Component {
                       >
                         <option value=""></option>
                         <React.Fragment>
-                          {this.state.content.map(userType => {
+                          {(
+                            this.state.content &&
+                            Object.keys(this.state.content).length !== 0
+                            ) ? this.state.content.map(userType => {
                             return (
                               <option value={userType.id} key={userType.id}>{userType.id}</option>
                             );
-                          })}
+                          }) : ""}
                         </React.Fragment>
                       </Form.Control>
                     </span>

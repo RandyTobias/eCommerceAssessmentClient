@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 
 import AuthService from '../../Services/AuthService';
+import AccessService from '../../Services/AccessService';
 import UserService from '../../Services/UserService';
 
 import BreadCrumbs from '../../Components/BreadCrumbs';
@@ -20,11 +21,7 @@ class UserGet extends Component {
 
     this.state = {
       isFetching: false,
-      currentUser: undefined,
       userData: {},
-      showAdminContent: false,
-      showStaffContent: false,
-      showCustomerContent: false,
     };
 
     const user = AuthService.getCurrentUser();
@@ -34,26 +31,30 @@ class UserGet extends Component {
   async fetchDataAsync(user) {
     try {
       this.setState({ ...this.state, isFetching: true });
-      const response = await UserService.userGet(user.nameid);
-      let ACLs = {
-        showCustomerContent: response.typeid === 3,
-        showStaffContent: response.typeid === 2,
-        showAdminContent: response.typeid === 1
-      };
-      this.setState({ ...ACLs, userData: response, isFetching: false });
+      if (user){
+        const response = await UserService.userGet(user.nameid);
+        this.setState({ userData: response, isFetching: false });
+      }
     } catch (e) {
       console.log(e);
       this.setState({ ...this.state, isFetching: false });
     }
   };
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-    this.fetchDataAsync(user);
+  async componentDidMount() {
+    try {
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({ ...this.state, ...ACLs });
+
+      await this.fetchDataAsync(this.user);
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 
   render() {
-    let showStaffContent, showAdminContent = null;
+    const { showStaffContent, showAdminContent } = this.state;
 
     const parts = [
       { link: "/", title: "Home" },
@@ -61,9 +62,6 @@ class UserGet extends Component {
       { link: null, title: "Get User" }
     ];
     const userTypes = { 1: "Administrator", 2: "Staff", 3: "Customer" };
-
-    showStaffContent = this.state.showStaffContent;
-    showAdminContent = this.state.showAdminContent;
 
     return (
       <Container className="GetScreen">

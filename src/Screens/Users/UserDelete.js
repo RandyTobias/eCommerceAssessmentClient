@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 
 import AuthService from '../../Services/AuthService';
+import AccessService from '../../Services/AccessService';
 import UserService from '../../Services/UserService';
 import UserTypeService from '../../Services/UserTypeService';
 
@@ -22,12 +23,8 @@ class UserDelete extends Component {
 
     this.state = {
       isFetching: false,
-      currentUser: undefined,
       userData: {},
       content: {},
-      showAdminContent: false,
-      showStaffContent: false,
-      showCustomerContent: false,
       userId: "",
       fName: "",
       lName: "",
@@ -44,32 +41,29 @@ class UserDelete extends Component {
   async fetchDataAsync(user) {
     try {
       this.setState({ ...this.state, isFetching: true });
-      //get info of logged in user for permissions
-      const response = await UserService.userGet(user.nameid);
-      let content = await UserService.userGetAll();
-      let ACLs = {
-        showCustomerContent: response.typeid === 3,
-        showStaffContent: response.typeid === 2,
-        showAdminContent: response.typeid === 1
-      };
-      //get user types for substitutions
-      const userTypesArray = await UserTypeService.userTypeGetAll();
-      let userTypes = {};
-      userTypesArray.map((el) => { return userTypes[el.id] = el.type; });
-      //get user data of user to delete (pulling anew because the all users array is not indexed by user id)
-      if (this.state.userId !== null && this.state.userId !== "") {
-        let response2 = await UserService.userGet(this.state.userId);
-        const data = {
-          userId: response2.id,
-          fName: response2.fName,
-          lName: response2.lName,
-          email: response2.email,
-          typeid: response2.typeid,
+      if (user) {
+        //get info of logged in user for permissions
+        const response = await UserService.userGet(user.nameid);
+        let content = await UserService.userGetAll();
+        //get user types for substitutions
+        const userTypesArray = await UserTypeService.userTypeGetAll();
+        let userTypes = {};
+        userTypesArray.map((el) => { return userTypes[el.id] = el.type; });
+        //get user data of user to delete (pulling anew because the all users array is not indexed by user id)
+        if (this.state.userId !== null && this.state.userId !== "") {
+          let response2 = await UserService.userGet(this.state.userId);
+          const data = {
+            userId: response2.id,
+            fName: response2.fName,
+            lName: response2.lName,
+            email: response2.email,
+            typeid: response2.typeid,
+          }
+          this.setState({ ...data, userData: response, userTypes: userTypes, content: content, isFetching: false });
         }
-        this.setState({ ...ACLs, ...data, userData: response, userTypes: userTypes, content: content, isFetching: false });
-      }
-      else {
-        this.setState({ ...ACLs, userData: response, userTypes: userTypes, content: content, isFetching: false });
+        else {
+          this.setState({ userData: response, userTypes: userTypes, content: content, isFetching: false });
+        }
       }
     } catch (e) {
       console.log(e);
@@ -77,9 +71,16 @@ class UserDelete extends Component {
     }
   };
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-    this.fetchDataAsync(user);
+  async componentDidMount() {
+    try {
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({ ...this.state, ...ACLs });
+
+      await this.fetchDataAsync(this.user);
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 
   async handleIdChange(e) {
@@ -125,6 +126,7 @@ class UserDelete extends Component {
     UserService.userDelete(this.state.userId).then(
       () => {
         this.setState({ loading: false });
+        this.props.history.goBack();
       },
       error => {
         const resMessage =
@@ -180,11 +182,16 @@ class UserDelete extends Component {
                       >
                         <option value=""></option>
                         <React.Fragment>
-                          {this.state.content.map(user => {
-                            return (
-                              <option value={user.id} key={user.id}>{user.id}</option>
-                            );
-                          })}
+                          {
+                            (
+                              this.state.content &&
+                              Object.keys(this.state.content).length !== 0
+                            ) ? this.state.content.map(user => {
+                              return (
+                                <option value={user.id} key={user.id}>{user.id}</option>
+                              );
+                            }) : null
+                          }
                         </React.Fragment>
                       </Form.Control>
                     </span>

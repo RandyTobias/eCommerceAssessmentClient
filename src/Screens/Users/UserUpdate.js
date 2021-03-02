@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 
 import AuthService from '../../Services/AuthService';
+import AccessService from '../../Services/AccessService';
 import UserService from '../../Services/UserService';
 import UserTypeService from '../../Services/UserTypeService';
 
@@ -26,11 +27,8 @@ class UserUpdate extends Component {
 
     this.state = {
       isFetching: false,
-      currentUser: undefined,
       userData: {},
-      showAdminContent: false,
-      showStaffContent: false,
-      showCustomerContent: false,
+      userTypes: {},
       email: "",
       password: "",
       fName: "",
@@ -46,33 +44,36 @@ class UserUpdate extends Component {
   async fetchDataAsync(user) {
     try {
       this.setState({ ...this.state, isFetching: true });
-      const response = await UserService.userGet(user.nameid);
-      let ACLs = {
-        showCustomerContent: response.typeid === 3,
-        showStaffContent: response.typeid === 2,
-        showAdminContent: response.typeid === 1
-      };
-      let data = {
-        id: response.id,
-        fName: response.fName,
-        lName: response.lName,
-        email: response.email,
-        password: response.password,
-        type: response.type,
+      if (user) {
+        const response = await UserService.userGet(user.nameid);
+        let data = {
+          id: response.id,
+          fName: response.fName,
+          lName: response.lName,
+          email: response.email,
+          password: null,
+          type: response.typeid,
+        }
+        console.log("data: ", data);
+        const userTypesArray = await UserTypeService.userTypeGetAll();
+        this.setState({ ...data, userTypes: userTypesArray, userData: response, isFetching: false });
       }
-      const userTypesArray = await UserTypeService.userTypeGetAll();
-      let userTypes = {};
-      userTypesArray.map( (el) => { return userTypes[el.id] = el.type;});
-      this.setState({ ...ACLs, ...data, userData: response, isFetching: false });
     } catch (e) {
       console.log(e);
       this.setState({ ...this.state, isFetching: false });
     }
   };
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
-    this.fetchDataAsync(user);
+  async componentDidMount() {
+    try {
+      const ACLs = await AccessService.getAccessLevels();
+      this.setState({ ...this.state, ...ACLs });
+
+      await this.fetchDataAsync(this.user);
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 
   handleEmailChange(e) {
@@ -122,10 +123,12 @@ class UserUpdate extends Component {
       password: this.state.password || '',
       type: parseInt(this.state.type),
     };
+    console.log("type: ", this.state.type);
 
     UserService.userUpdate(payload).then(
       () => {
         this.setState({ loading: false });
+        this.props.history.goBack();
       },
       error => {
         const resMessage =
@@ -144,23 +147,13 @@ class UserUpdate extends Component {
   }
 
   render() {
-    let showStaffContent, showAdminContent = null;
+    let { showStaffContent, showAdminContent } = this.state;
 
     const parts = [
       { link: "/", title: "Home" },
       { link: "/User", title: "Users" },
       { link: null, title: "Update User" }
     ];
-    // const userTypesArray = [
-    //   { key: 1, type: "Administrator" },
-    //   { key: 2, type: "Staff" },
-    //   { key: 3, type: "Customer" }
-    // ]
-    console.log("User Data: ");
-    console.log(this.state.userData);
-
-    showStaffContent = this.state.showStaffContent;
-    showAdminContent = this.state.showAdminContent;
 
     return (
       <Container className="UpdateScreen">
@@ -240,6 +233,7 @@ class UserUpdate extends Component {
               <Col sm={8}>
                 <span className="data">
                   <Form.Control
+                    required
                     className="inputData"
                     type="password"
                     placeholder="Password"
@@ -262,11 +256,14 @@ class UserUpdate extends Component {
                       value={this.state.type ? this.state.type : ''}
                     >
                       <React.Fragment>
-                        {this.state.userTypes.map(type => {
-                          return (
-                            <option value={type.id} key={type.id}>{type.type}</option>
-                          );
-                        })}
+                        {
+                          (this.state.userTypes &&
+                            Object.keys(this.state.userTypes).length !== 0
+                          ) ? this.state.userTypes.map(type => {
+                            return (
+                              <option value={type.id} key={type.id}>{type.type}</option>
+                            );
+                          }) : null}
                       </React.Fragment>
                     </Form.Control>
                   </span>
